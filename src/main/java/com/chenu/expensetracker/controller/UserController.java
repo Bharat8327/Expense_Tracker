@@ -1,5 +1,6 @@
 package com.chenu.expensetracker.controller;
 
+import com.chenu.expensetracker.dto.UserDTO;
 import com.chenu.expensetracker.entity.User;
 import com.chenu.expensetracker.repository.UserRepository;
 import com.chenu.expensetracker.service.UserService;
@@ -9,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/users")
@@ -25,8 +27,12 @@ public class UserController {
     }
 
     @GetMapping("/all")
-    public ResponseEntity<List<User>> getAllUsers() {
-        return ResponseEntity.ok(userRepository.findAll());
+    public ResponseEntity<List<UserDTO>> getAllUsers() {
+        List<User>users = userRepository.findAll();
+        List<UserDTO>dtos = users.stream()
+                .map(user -> userService.toUserDTO(user))
+                .collect(Collectors.toList());
+        return  new ResponseEntity<>(dtos, HttpStatus.OK);
     }
 
 

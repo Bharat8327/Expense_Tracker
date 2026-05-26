@@ -1,21 +1,21 @@
 package com.chenu.expensetracker.service;
 
 import com.chenu.expensetracker.entity.Expense;
+import com.chenu.expensetracker.entity.ExpenseCategory;
 import com.chenu.expensetracker.entity.User;
 import com.chenu.expensetracker.repository.ExpenseRepository;
 import com.chenu.expensetracker.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Service
+@Component
 public class ExpenseService {
 
     @Autowired
@@ -27,7 +27,21 @@ public class ExpenseService {
     public ResponseEntity<?> createExpense(
             Long userId,
             Expense expense) {
+        if (expense.getCategory() == null) {
+                return new ResponseEntity<>(
+                        "Category is required. Allowed values: " + ExpenseCategory.valuesList(),
+                        HttpStatus.BAD_REQUEST
+                );
+            }
 
+
+        if (!isValidCategory(expense.getCategory().name())) {
+                return new ResponseEntity<>(
+                        "Invalid category '" + expense.getCategory().name() + "'. Allowed values are: " + ExpenseCategory.valuesList(),
+                        HttpStatus.BAD_REQUEST
+                );
+            }
+        System.out.println("Category is not valid 3"+ expense.getCategory());
         Optional<User> optionalUser =
                 userRepository.findById(userId);
 
@@ -56,8 +70,7 @@ public class ExpenseService {
             );
         }
 
-        if (expense.getCategory() == null ||
-                expense.getCategory().trim().isEmpty()) {
+        if (expense.getCategory() == null) {
 
             return new ResponseEntity<>(
                     "Expense category is required",
@@ -91,23 +104,13 @@ public class ExpenseService {
         );
     }
 
-    public ResponseEntity<?> getAllExpensesOfUser(
-            Long userId) {
-
-        Optional<User> optionalUser =
-                userRepository.findById(userId);
-
-        if (optionalUser.isEmpty()) {
-            return new ResponseEntity<>(
-                    "User not found",
-                    HttpStatus.NOT_FOUND
-            );
+    public List<Expense> getAllExpensesOfUser(Long userId) {
+        Optional<User> optionalUser = userRepository.findById(userId);
+        if (optionalUser.isPresent()) {
+            return optionalUser.get().getExpenses();
+        } else {
+            return Collections.emptyList();
         }
-
-        return new ResponseEntity<>(
-                optionalUser.get().getExpenses(),
-                HttpStatus.OK
-        );
     }
 
     public ResponseEntity<?> getExpenseById(
@@ -340,21 +343,33 @@ public class ExpenseService {
                     HttpStatus.NOT_FOUND
             );
         }
+        try {
+            ExpenseCategory categoryEnum = ExpenseCategory.valueOf(category.toUpperCase());
+            List<Expense> expenses = expenseRepository.findByUserIdAndCategory(id, categoryEnum);
+            if (expenses.isEmpty()) {
+                return new ResponseEntity<>(
+                        "Category not found",
+                        HttpStatus.NOT_FOUND
+                );
+            }
 
-        List<Expense> expenses = expenseRepository
-                .findByUserIdAndCategory(id, category);
-
-        if (expenses.isEmpty()) {
             return new ResponseEntity<>(
-                    "Category not found",
-                    HttpStatus.NOT_FOUND
+                    expenses,
+                    HttpStatus.OK
             );
+        }catch (Exception e){
+            return new ResponseEntity("Enter Valid Category",HttpStatus.BAD_REQUEST);
         }
 
-        return new ResponseEntity<>(
-                expenses,
-                HttpStatus.OK
-        );
+    }
+
+    private boolean isValidCategory(String categoryString) {
+        for (ExpenseCategory c : ExpenseCategory.values()) {
+            if (c.name().equalsIgnoreCase(categoryString)) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }

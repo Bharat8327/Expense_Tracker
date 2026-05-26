@@ -1,6 +1,7 @@
 package com.chenu.expensetracker.repository;
 
 import com.chenu.expensetracker.entity.Expense;
+import com.chenu.expensetracker.entity.ExpenseCategory;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDate;
@@ -16,9 +17,6 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
 
     List<Expense> findTop10ByUserIdOrderByDateDesc(Long userId); // get latest 10 expense
 
-    List<Expense> findByUserIdAndCategory( // get expense by category
-            Long userId,
-            String category
-    );
+    List<Expense> findByUserIdAndCategory(Long userId, ExpenseCategory category );// get expense by category
 
 }

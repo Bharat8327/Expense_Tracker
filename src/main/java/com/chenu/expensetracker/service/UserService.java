@@ -1,5 +1,8 @@
 package com.chenu.expensetracker.service;
 
+import com.chenu.expensetracker.dto.ExpenseDTO;
+import com.chenu.expensetracker.dto.UserDTO;
+import com.chenu.expensetracker.entity.Expense;
 import com.chenu.expensetracker.entity.User;
 import com.chenu.expensetracker.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +20,7 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
     public PasswordEncoder passwordEncoder() {
+
         return new BCryptPasswordEncoder();
     }
 
@@ -65,7 +69,7 @@ public class UserService {
         User savedUser = userRepository.save(user);
 
         return new ResponseEntity<>(
-                savedUser,
+                toUserDTO(savedUser),
                 HttpStatus.CREATED
         );
     }
@@ -93,7 +97,7 @@ public class UserService {
         }
 
         return new ResponseEntity<>(
-                user.get(),
+                toUserDTO(user.get()),
                 HttpStatus.OK
         );
     }
@@ -110,9 +114,9 @@ public class UserService {
                     HttpStatus.NOT_FOUND
             );
         }
-
+        User  user = optionalUser.get();
         return new ResponseEntity<>(
-                optionalUser.get(),
+                toUserDTO(user),
                 HttpStatus.OK
         );
     }
@@ -190,7 +194,7 @@ public class UserService {
                 userRepository.save(existingUser);
 
         return new ResponseEntity<>(
-                updatedUser,
+                toUserDTO(updatedUser),
                 HttpStatus.OK
         );
     }
@@ -215,5 +219,26 @@ public class UserService {
                 "User deleted successfully",
                 HttpStatus.OK
         );
+    }
+
+
+    public UserDTO toUserDTO(User user) {
+        UserDTO dto = new UserDTO();
+        dto.setId(user.getId());
+        dto.setUsername(user.getUsername());
+        dto.setTotalMoney(user.getTotalMoney());
+        dto.setRemainingMoney(user.getRemainingMoney());
+        return dto;
+    }
+
+    public ExpenseDTO toExpenseDTO(Expense expense) {
+        ExpenseDTO dto = new ExpenseDTO();
+        dto.setId(expense.getId());
+        dto.setTitle(expense.getTitle());
+        dto.setMessage(expense.getMessage());
+        dto.setAmount(expense.getAmount());
+        dto.setCategory(expense.getCategory().name());
+        dto.setDate(expense.getDate());
+        return dto;
     }
 }

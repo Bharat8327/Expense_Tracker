@@ -13,7 +13,6 @@ public class Expense {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-
     private Long id;
 
     private String title;
@@ -22,16 +21,13 @@ public class Expense {
 
     private Double amount;
 
-    private String category;
+    @Enumerated(EnumType.STRING)
+    private ExpenseCategory category;
 
     private LocalDate date;
 
     @ManyToOne
-
-
-
-    @JoinColumn(name = "user_id")// Foreign key column in PostgreSQL
-
+    @JoinColumn(name = "user_id")
     @JsonBackReference
     private User user;
 }
