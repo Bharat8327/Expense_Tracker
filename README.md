@@ -20,15 +20,15 @@ This project uses the following tools and technologies:
 
 ## ✨ What Can You Do With This App?
 
-✅ Create new users
-✅ Add daily expenses
-✅ Organize expenses by category (Food, Transport, Shopping, etc.)
-✅ View all your expenses
-✅ See your last 10 expenses
-✅ Get monthly spending summary
-✅ Filter expenses by category
-✅ Update or delete expenses
-✅ Track remaining money
+- ✅ Create new users
+- ✅ Add daily expenses
+- ✅ Organize expenses by category (Food, Transport, Shopping, etc.)
+- ✅ View all your expenses
+- ✅ See your last 10 expenses
+- ✅ Get monthly spending summary
+- ✅ Filter expenses by category
+- ✅ Update or delete expenses
+- ✅ Track remaining money
 
 ---
 
