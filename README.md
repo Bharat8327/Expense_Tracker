@@ -153,7 +153,6 @@ POST http://localhost:8080/users
 {
   "id": 1,
   "username": "john_doe",
-  "password": "mypassword123",
   "totalMoney": 5000,
   "remainingMoney": 5000
 }
@@ -181,7 +180,6 @@ GET http://localhost:8080/users/1
 {
   "id": 1,
   "username": "john_doe",
-  "password": "mypassword123",
   "totalMoney": 5000,
   "remainingMoney": 3500
 }
@@ -209,7 +207,6 @@ GET http://localhost:8080/users/username/john_doe
 {
   "id": 1,
   "username": "john_doe",
-  "password": "mypassword123",
   "totalMoney": 5000,
   "remainingMoney": 3500
 }
@@ -249,7 +246,6 @@ PUT http://localhost:8080/users/1
 {
   "id": 1,
   "username": "john_updated",
-  "password": "newpassword456",
   "totalMoney": 6000,
   "remainingMoney": 4000
 }
@@ -707,7 +703,7 @@ GET http://localhost:8080/users/1/expenses/month
 
 ## 👨‍💼 Created By
 
-**Bharat8327** - GitHub
+**Bharat_Patel 🧑‍💻** 
 
 ---
 
