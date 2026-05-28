@@ -1,14 +1,14 @@
 package com.chenu.expensetracker.service;
 
-import com.chenu.expensetracker.dto.ExpenseDTO;
-import com.chenu.expensetracker.dto.UserDTO;
-import com.chenu.expensetracker.entity.Expense;
 import com.chenu.expensetracker.entity.User;
+import com.chenu.expensetracker.exception.BadRequestException;
+import com.chenu.expensetracker.exception.ConflictException;
+import com.chenu.expensetracker.exception.ResourceNotFoundException;
 import com.chenu.expensetracker.repository.UserRepository;
+import com.chenu.expensetracker.util.UserMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -18,58 +18,49 @@ import java.util.Optional;
 public class UserService {
 
     @Autowired
-    private UserRepository userRepository;
-    public PasswordEncoder passwordEncoder() {
+    private final UserRepository userRepository;
+    @Autowired
+    private final PasswordEncoder passwordEncoder;
 
-        return new BCryptPasswordEncoder();
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public ResponseEntity<?> createUser(User user) {
 
         if (user.getUsername() == null ||
                 user.getUsername().trim().isEmpty()) {
-
-            return new ResponseEntity<>(
-                    "Username is required",
-                    HttpStatus.BAD_REQUEST
-            );
+            throw new BadRequestException("Username cannot be empty");
         }
 
-        if (user.getPassword() == null ||
-                user.getPassword().trim().isEmpty()) {
-
-            return new ResponseEntity<>(
-                    "Password is required",
-                    HttpStatus.BAD_REQUEST
-            );
+        if (user.getPassword() != null &&
+                !user.getPassword().trim().isEmpty()) {
+            if (user.getPassword().length() < 6) {
+                throw new BadRequestException(
+                        "Password must be at least 6 characters"
+                );
+            }
         }
 
         if (user.getTotalMoney() == null ||
                 user.getTotalMoney() < 0) {
-
-            return new ResponseEntity<>(
-                    "Total money must be positive",
-                    HttpStatus.BAD_REQUEST
-            );
+            throw new BadRequestException("Total money must be positive");
         }
 
         if (userRepository
                 .findByUsername(user.getUsername())
                 .isPresent()) {
-
-            return new ResponseEntity<>(
-                    "Username already exists",
-                    HttpStatus.CONFLICT
-            );
+             throw new ConflictException("Username already exists");
         }
 
         user.setRemainingMoney(user.getTotalMoney());
-        user.setPassword(passwordEncoder().encode(user.getPassword()));
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
 
         User savedUser = userRepository.save(user);
 
         return new ResponseEntity<>(
-                toUserDTO(savedUser),
+                UserMapper.toUserDTO(savedUser),
                 HttpStatus.CREATED
         );
     }
@@ -78,26 +69,18 @@ public class UserService {
 
         if (username == null ||
                 username.trim().isEmpty()) {
-
-            return new ResponseEntity<>(
-                    "Username is required",
-                    HttpStatus.BAD_REQUEST
-            );
+            throw new BadRequestException("Username is required");
         }
 
         Optional<User> user =
                 userRepository.findByUsername(username);
 
         if (user.isEmpty()) {
-
-            return new ResponseEntity<>(
-                    "User not found",
-                    HttpStatus.NOT_FOUND
-            );
+            throw new ResourceNotFoundException("User not found");
         }
 
         return new ResponseEntity<>(
-                toUserDTO(user.get()),
+                UserMapper.toUserDTO(user.get()),
                 HttpStatus.OK
         );
     }
@@ -108,15 +91,11 @@ public class UserService {
                 userRepository.findById(userId);
 
         if (optionalUser.isEmpty()) {
-
-            return new ResponseEntity<>(
-                    "User not found",
-                    HttpStatus.NOT_FOUND
-            );
+            throw new ResourceNotFoundException("User not found");
         }
         User  user = optionalUser.get();
         return new ResponseEntity<>(
-                toUserDTO(user),
+                UserMapper.toUserDTO(user),
                 HttpStatus.OK
         );
     }
@@ -130,11 +109,7 @@ public class UserService {
                 userRepository.findById(userId);
 
         if (optionalUser.isEmpty()) {
-
-            return new ResponseEntity<>(
-                    "User not found",
-                    HttpStatus.NOT_FOUND
-            );
+        throw new ResourceNotFoundException("User not found");
         }
 
         User existingUser = optionalUser.get();
@@ -151,10 +126,7 @@ public class UserService {
                             .getId()
                             .equals(userId)) {
 
-                return new ResponseEntity<>(
-                        "Username already exists",
-                        HttpStatus.CONFLICT
-                );
+                throw new ConflictException("Username already exists");
             }
 
             existingUser.setUsername(
@@ -163,18 +135,12 @@ public class UserService {
 
         if (user.getPassword() != null &&
                 !user.getPassword().trim().isEmpty()) {
-
-            existingUser.setPassword(passwordEncoder().encode(user.getPassword()));
+            existingUser.setPassword(passwordEncoder.encode(user.getPassword()));
         }
 
         if (user.getTotalMoney() != null) {
-
             if (user.getTotalMoney() < 0) {
-
-                return new ResponseEntity<>(
-                        "Total money cannot be negative",
-                        HttpStatus.BAD_REQUEST
-                );
+                throw new BadRequestException("Total money cannot be negative");
             }
 
             Double difference =
@@ -194,7 +160,7 @@ public class UserService {
                 userRepository.save(existingUser);
 
         return new ResponseEntity<>(
-                toUserDTO(updatedUser),
+                UserMapper.toUserDTO(updatedUser),
                 HttpStatus.OK
         );
     }
@@ -206,11 +172,7 @@ public class UserService {
                 userRepository.findById(userId);
 
         if (optionalUser.isEmpty()) {
-
-            return new ResponseEntity<>(
-                    "User not found",
-                    HttpStatus.NOT_FOUND
-            );
+            throw new ResourceNotFoundException("User not found");
         }
 
         userRepository.deleteById(userId);
@@ -222,23 +184,7 @@ public class UserService {
     }
 
 
-    public UserDTO toUserDTO(User user) {
-        UserDTO dto = new UserDTO();
-        dto.setId(user.getId());
-        dto.setUsername(user.getUsername());
-        dto.setTotalMoney(user.getTotalMoney());
-        dto.setRemainingMoney(user.getRemainingMoney());
-        return dto;
-    }
 
-    public ExpenseDTO toExpenseDTO(Expense expense) {
-        ExpenseDTO dto = new ExpenseDTO();
-        dto.setId(expense.getId());
-        dto.setTitle(expense.getTitle());
-        dto.setMessage(expense.getMessage());
-        dto.setAmount(expense.getAmount());
-        dto.setCategory(expense.getCategory().name());
-        dto.setDate(expense.getDate());
-        return dto;
-    }
+
+
 }

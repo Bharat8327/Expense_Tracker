@@ -4,6 +4,7 @@ import com.chenu.expensetracker.dto.UserDTO;
 import com.chenu.expensetracker.entity.User;
 import com.chenu.expensetracker.repository.UserRepository;
 import com.chenu.expensetracker.service.UserService;
+import com.chenu.expensetracker.util.UserMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,8 +30,8 @@ public class UserController {
     @GetMapping("/all")
     public ResponseEntity<List<UserDTO>> getAllUsers() {
         List<User>users = userRepository.findAll();
-        List<UserDTO>dtos = users.stream()
-                .map(user -> userService.toUserDTO(user))
+        List<UserDTO> dtos = users.stream()
+                .map(UserMapper::toUserDTO)
                 .collect(Collectors.toList());
         return  new ResponseEntity<>(dtos, HttpStatus.OK);
     }

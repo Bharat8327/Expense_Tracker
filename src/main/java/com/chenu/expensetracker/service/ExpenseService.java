@@ -3,6 +3,9 @@ package com.chenu.expensetracker.service;
 import com.chenu.expensetracker.entity.Expense;
 import com.chenu.expensetracker.entity.ExpenseCategory;
 import com.chenu.expensetracker.entity.User;
+import com.chenu.expensetracker.exception.BadRequestException;
+import com.chenu.expensetracker.exception.ForbiddenException;
+import com.chenu.expensetracker.exception.ResourceNotFoundException;
 import com.chenu.expensetracker.repository.ExpenseRepository;
 import com.chenu.expensetracker.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,54 +22,45 @@ import java.util.*;
 public class ExpenseService {
 
     @Autowired
-    private ExpenseRepository expenseRepository;
+    private final ExpenseRepository expenseRepository;
 
     @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+
+    public ExpenseService(
+            UserRepository userRepository,
+            ExpenseRepository expenseRepository
+    ) {
+        this.userRepository = userRepository;
+        this.expenseRepository = expenseRepository;
+    }
 
     public ResponseEntity<?> createExpense(
             Long userId,
             Expense expense) {
         if (expense.getCategory() == null) {
-                return new ResponseEntity<>(
-                        "Category is required. Allowed values: " + ExpenseCategory.valuesList(),
-                        HttpStatus.BAD_REQUEST
-                );
+            throw new BadRequestException("Category is required. Allowed values: " + ExpenseCategory.valuesList());
             }
 
-
-        if (!isValidCategory(expense.getCategory().name())) {
-                return new ResponseEntity<>(
-                        "Invalid category '" + expense.getCategory().name() + "'. Allowed values are: " + ExpenseCategory.valuesList(),
-                        HttpStatus.BAD_REQUEST
-                );
-            }
-        System.out.println("Category is not valid 3"+ expense.getCategory());
         Optional<User> optionalUser =
                 userRepository.findById(userId);
 
         if (optionalUser.isEmpty()) {
-            return new ResponseEntity<>(
-                    "User not found",
-                    HttpStatus.NOT_FOUND
-            );
+            throw new ResourceNotFoundException("User not found");
         }
 
         if (expense.getTitle() == null ||
                 expense.getTitle().trim().isEmpty()) {
-
-            return new ResponseEntity<>(
-                    "Expense title is required",
-                    HttpStatus.BAD_REQUEST
+            throw new BadRequestException(
+                    "Expense title is required"
             );
         }
 
         if (expense.getAmount() == null ||
                 expense.getAmount() <= 0) {
 
-            return new ResponseEntity<>(
-                    "Expense amount must be greater than 0",
-                    HttpStatus.BAD_REQUEST
+            throw new BadRequestException(
+                    "Expense amount must be greater than 0"
             );
         }
 
@@ -121,19 +115,16 @@ public class ExpenseService {
                 expenseRepository.findById(expenseId);
 
         if (optionalExpense.isEmpty()) {
-            return new ResponseEntity<>(
-                    "Expense not found",
-                    HttpStatus.NOT_FOUND
+            throw new ResourceNotFoundException(
+                    "Expense not found"
             );
         }
 
         Expense expense = optionalExpense.get();
 
         if (!expense.getUser().getId().equals(userId)) {
-
-            return new ResponseEntity<>(
-                    "Expense does not belong to this user",
-                    HttpStatus.BAD_REQUEST
+            throw new ForbiddenException(
+                    "Access denied"
             );
         }
 
@@ -152,9 +143,8 @@ public class ExpenseService {
                 expenseRepository.findById(expenseId);
 
         if (optionalExpense.isEmpty()) {
-            return new ResponseEntity<>(
-                    "Expense not found",
-                    HttpStatus.NOT_FOUND
+            throw new ResourceNotFoundException(
+                    "Expense not found"
             );
         }
 
@@ -164,29 +154,20 @@ public class ExpenseService {
         if (!existingExpense.getUser()
                 .getId()
                 .equals(userId)) {
-
-            return new ResponseEntity<>(
-                    "Unauthorized",
-                    HttpStatus.BAD_REQUEST
+            throw new BadRequestException(
+                    "Unauthorized"
             );
         }
 
         if (updatedExpense.getTitle() == null ||
                 updatedExpense.getTitle().trim().isEmpty()) {
-
-            return new ResponseEntity<>(
-                    "Expense title is required",
-                    HttpStatus.BAD_REQUEST
-            );
+            throw new BadRequestException("Expense title is required");
         }
 
         if (updatedExpense.getAmount() == null ||
                 updatedExpense.getAmount() <= 0) {
+            throw new BadRequestException("Expense amount must be greater than 0");
 
-            return new ResponseEntity<>(
-                    "Expense amount must be greater than 0",
-                    HttpStatus.BAD_REQUEST
-            );
         }
 
         User user = existingExpense.getUser();
@@ -205,7 +186,6 @@ public class ExpenseService {
         existingExpense.setMessage(updatedExpense.getMessage());
         existingExpense.setAmount(updatedExpense.getAmount());
         existingExpense.setCategory(updatedExpense.getCategory());
-        existingExpense.setDate(updatedExpense.getDate());
 
         expenseRepository.save(existingExpense);
 
@@ -225,21 +205,13 @@ public class ExpenseService {
                 expenseRepository.findById(expenseId);
 
         if (optionalExpense.isEmpty()) {
-
-            return new ResponseEntity<>(
-                    "Expense not found",
-                    HttpStatus.NOT_FOUND
-            );
+            throw new ResourceNotFoundException("Expense not found");
         }
 
         Expense expense = optionalExpense.get();
 
         if (!expense.getUser().getId().equals(userId)) {
-
-            return new ResponseEntity<>(
-                    "Unauthorized",
-                    HttpStatus.BAD_REQUEST
-            );
+            throw new BadRequestException("Unauthorized");
         }
 
         User user = expense.getUser();
@@ -265,11 +237,7 @@ public class ExpenseService {
                 userRepository.findById(userId);
 
         if (optionalUser.isEmpty()) {
-
-            return new ResponseEntity<>(
-                    "User not found",
-                    HttpStatus.NOT_FOUND
-            );
+            throw new ResourceNotFoundException("User not found");
         }
 
         LocalDate endDate = LocalDate.now();
@@ -314,11 +282,7 @@ public class ExpenseService {
                 userRepository.findById(userId);
 
         if (optionalUser.isEmpty()) {
-
-            return new ResponseEntity<>(
-                    "User not found",
-                    HttpStatus.NOT_FOUND
-            );
+            throw new ResourceNotFoundException("User not found");
         }
 
         List<Expense> expenses =
@@ -338,38 +302,38 @@ public class ExpenseService {
         Optional<User> optional = userRepository.findById(id);
 
         if (optional.isEmpty()) {
-            return new ResponseEntity<>(
-                    "User not found",
-                    HttpStatus.NOT_FOUND
+            throw new ResourceNotFoundException(
+                    "User not found"
             );
         }
+        ExpenseCategory categoryEnum;
         try {
-            ExpenseCategory categoryEnum = ExpenseCategory.valueOf(category.toUpperCase());
-            List<Expense> expenses = expenseRepository.findByUserIdAndCategory(id, categoryEnum);
-            if (expenses.isEmpty()) {
-                return new ResponseEntity<>(
-                        "Category not found",
-                        HttpStatus.NOT_FOUND
-                );
-            }
+            categoryEnum =  ExpenseCategory.valueOf(
+                            category.toUpperCase()
+                    );
 
-            return new ResponseEntity<>(
-                    expenses,
-                    HttpStatus.OK
+        } catch (Exception e) {
+
+            throw new BadRequestException(
+                    "Invalid category. Allowed values: "
+                            + ExpenseCategory.valuesList()
             );
-        }catch (Exception e){
-            return new ResponseEntity("Enter Valid Category",HttpStatus.BAD_REQUEST);
+        }
+        List<Expense> expenses =
+                expenseRepository
+                        .findByUserIdAndCategory(id, categoryEnum);
+
+        if (expenses.isEmpty()) {
+            throw new ResourceNotFoundException(
+                    "No expenses found for category: " + category
+            );
         }
 
-    }
+        return new ResponseEntity<>(
+                expenses,
+                HttpStatus.OK
+        );
 
-    private boolean isValidCategory(String categoryString) {
-        for (ExpenseCategory c : ExpenseCategory.values()) {
-            if (c.name().equalsIgnoreCase(categoryString)) {
-                return true;
-            }
-        }
-        return false;
     }
 
 }

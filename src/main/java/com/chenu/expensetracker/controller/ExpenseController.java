@@ -4,6 +4,7 @@ import com.chenu.expensetracker.dto.ExpenseDTO;
 import com.chenu.expensetracker.entity.Expense;
 import com.chenu.expensetracker.service.ExpenseService;
 import com.chenu.expensetracker.service.UserService;
+import com.chenu.expensetracker.util.ExpenseMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,6 +27,7 @@ public class ExpenseController {
             @PathVariable Long userId,
             @RequestBody Expense expense) {
 
+
         return expenseService.createExpense(userId, expense);
     }
 
@@ -35,9 +37,9 @@ public class ExpenseController {
             if (expenses.isEmpty()) {
                 return ResponseEntity.status(404).body(Collections.emptyList());
             }
-            List<ExpenseDTO> dtos = expenses.stream()
-                    .map(expense -> userService.toExpenseDTO(expense))
-                    .collect(Collectors.toList());
+        List<ExpenseDTO> dtos = expenses.stream()
+                .map(ExpenseMapper::toExpenseDTO)
+                .collect(Collectors.toList());
             return ResponseEntity.ok(dtos);
         }
 
